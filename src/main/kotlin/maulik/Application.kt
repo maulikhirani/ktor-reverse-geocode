@@ -5,7 +5,7 @@ import io.ktor.server.netty.*
 import maulik.plugins.*
 
 fun main() {
-    embeddedServer(Netty, port = 8081, host = "0.0.0.0") {
+    embeddedServer(Netty, port = System.getenv("PORT").toInt()) {
         configureMonitoring()
         configureRouting()
     }.start(wait = true)
