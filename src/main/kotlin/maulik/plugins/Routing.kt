@@ -12,6 +12,7 @@ import io.ktor.features.*
 import io.ktor.gson.*
 import io.ktor.response.*
 import io.ktor.request.*
+import maulik.model.GenericErrorModel
 import maulik.model.PlaceDetails
 import maulik.model.PlaceDetailsResponse
 import maulik.model.ReverseGeocodeRequest
@@ -26,12 +27,35 @@ fun Application.configureRouting() {
 
     routing {
         post("/reverseGeocode") {
-            val request = call.receive<ReverseGeocodeRequest>()
-            val placeDetails = getPlaceDetails(request)
-            if (placeDetails != null) {
-                call.respond(placeDetails)
-            } else {
-                call.respond(HttpStatusCode.BadRequest)
+            try {
+                val request = call.receive<ReverseGeocodeRequest>()
+
+                if (request.apiKey.isNullOrBlank()) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        GenericErrorModel("Missing API key")
+                    )
+                } else if (request.latitude == null || request.longitude == null) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        GenericErrorModel("Invalid Lat/Lng")
+                    )
+                } else {
+                    val placeDetails = getPlaceDetails(request)
+                    if (placeDetails != null) {
+                        call.respond(placeDetails)
+                    } else {
+                        call.respond(
+                            HttpStatusCode.NotFound,
+                            GenericErrorModel("Could not find place details")
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    GenericErrorModel("Something went wrong")
+                )
             }
         }
     }
